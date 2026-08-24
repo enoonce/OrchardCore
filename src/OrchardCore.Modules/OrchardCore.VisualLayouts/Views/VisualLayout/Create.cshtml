@@ -1,0 +1,54 @@
+@model VisualLayoutViewModel
+@{
+    var returnUrl = ViewData["returnUrl"]?.ToString();
+}
+
+<zone Name="Title"><h1>@RenderTitleSegments(T["Create Visual Layout"])</h1></zone>
+
+<div asp-validation-summary="ModelOnly"></div>
+<form asp-action="Create" asp-route-returnUrl="@ViewData["returnUrl"]" method="post" class="no-multisubmit">
+    <div class="card text-bg-theme mb-3 position-sticky action-bar">
+        <div class="card-body p-3 text-end">
+            <div class="btn-group">
+                <button type="submit" name="submit" class="btn btn-primary save">@T["Save"]</button>
+                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-reference="parent" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="visually-hidden">@T["Toggle Dropdown"]</span>
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item save-continue" name="submit" type="submit" value="SaveAndContinue">@T["and continue"]</button>
+                </div>
+            </div>
+
+            @if (Url.IsLocalUrl(returnUrl))
+            {
+                <a class="btn btn-secondary cancel" role="button" href="@returnUrl">@T["Cancel"]</a>
+            }
+        </div>
+    </div>
+
+    <div class="ocat-wrapper" asp-validation-class-for="Name">
+        <label asp-for="Name" class="ocat-label">@T["Name"]</label>
+        <div class="ocat-end">
+            <input asp-for="Name" class="form-control" autofocus />
+            <span asp-validation-for="Name"></span>
+            <span class="hint">@T["The name of the layout. It is also the name of the shape that this layout will override."]</span>
+        </div>
+    </div>
+
+    <div class="ocat-wrapper" asp-validation-class-for="Description">
+        <label asp-for="Description" class="ocat-label">@T["Description"]</label>
+        <div class="ocat-end">
+            <input asp-for="Description" class="form-control" />
+            <span class="hint">@T["The description of the layout."]</span>
+        </div>
+    </div>
+
+    <div class="ocat-wrapper" asp-validation-class-for="State">
+        <label asp-for="State" class="ocat-label">@T["Layout"]</label>
+        <div class="ocat-end">
+            <textarea asp-for="State" rows="16" class="form-control"></textarea>
+            <span asp-validation-for="State"></span>
+            <span class="hint">@T["The JSON representation of the layout. A visual canvas editor will replace this field."]</span>
+        </div>
+    </div>
+</form>

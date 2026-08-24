@@ -162,6 +162,7 @@
     <Project Path="src/OrchardCore.Modules/OrchardCore.Twitter/OrchardCore.Twitter.csproj" />
     <Project Path="src/OrchardCore.Modules/OrchardCore.UrlRewriting/OrchardCore.UrlRewriting.csproj" />
     <Project Path="src/OrchardCore.Modules/OrchardCore.Users/OrchardCore.Users.csproj" />
+    <Project Path="src/OrchardCore.Modules/OrchardCore.VisualLayouts/OrchardCore.VisualLayouts.csproj" />
     <Project Path="src/OrchardCore.Modules/OrchardCore.Workflows/OrchardCore.Workflows.csproj" />
   </Folder>
   <Folder Name="/src/OrchardCore.Samples/" />

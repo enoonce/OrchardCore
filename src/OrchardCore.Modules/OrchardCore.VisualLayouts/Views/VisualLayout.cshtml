@@ -1,0 +1,29 @@
+@model dynamic
+@using OrchardCore.VisualLayouts.Models
+@{
+    var layout = (VisualLayout)Model.Layout;
+}
+
+<div class="visual-layout">
+    @foreach (var row in layout.Rows)
+    {
+        <div class="row @(row.CssClasses)">
+            @foreach (var column in row.Columns)
+            {
+                <div class="col-lg-@column.WidthLg @(column.CssClasses)">
+                    @foreach (var block in column.Blocks)
+                    {
+                        if (block.Type == "Html")
+                        {
+                            @Html.Raw(block.Properties.TryGetValue("Html", out var html) ? html : string.Empty)
+                        }
+                        else if (block.Type == "Text")
+                        {
+                            <p>@(block.Properties.TryGetValue("Text", out var text) ? text : string.Empty)</p>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
