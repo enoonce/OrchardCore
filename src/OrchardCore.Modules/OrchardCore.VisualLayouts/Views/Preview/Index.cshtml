@@ -1,0 +1,164 @@
+@{
+    Layout = "_Layout";
+    Title.AddSegment(T["Visual Layout Preview"]);
+}
+
+<iframe id="iframe" style="position:fixed; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden;z-index:999990;">
+    Your browser doesn't support iframes
+</iframe>
+
+<div id="notConnectedWarning" class="alert alert-info alert-dismissible fade show collapse" role="alert" style="position:fixed; height:60px; top:10px; right:40px; display:none; z-index:999999;">
+    <button type="button" id="close-warning" class="btn-close" aria-label="Close" style="position: relative; padding: 0 0 0 1rem; margin-top: -0.2rem;"></button>
+    <span>@T["Preview Disconnected"] </span>
+</div>
+
+<div id="serverErrorWarning" class="alert alert-warning alert-dismissible fade show" role="alert" style="position:fixed; top:10px; right:40px; display:none; z-index:999999;">
+    <button type="button" id="close-server-warning" class="btn-close" aria-label="Close" aria-hidden="true"></button>
+    <p>@T["Preview Error"] </p>
+    <ul></ul>
+</div>
+
+<div id="indexPreviewUrl" style="display:none" data-value="@Url.Action("Index", "Preview" , new { area="OrchardCore.VisualLayouts" })"></div>
+<div id="renderPreviewUrl" style="display:none" data-value="@Url.Action("Render", "Preview" , new { area="OrchardCore.VisualLayouts" })"></div>
+<div id="contentPreviewUrl" style="display:none" data-value="@Url.Content("~/").ToUriComponents()"></div>
+
+<resources type="Footer" />
+
+<script>
+    (function () {
+        var indexPreviewUrl = document.getElementById('indexPreviewUrl').dataset.value;
+        var renderPreviewUrl = document.getElementById('renderPreviewUrl').dataset.value;
+        var contentPreviewUrl = document.getElementById('contentPreviewUrl').dataset.value;
+        var iframe = document.getElementById('iframe');
+        var notConnectedWarning = document.getElementById('notConnectedWarning');
+        var serverErrorWarning = document.getElementById('serverErrorWarning');
+        var previewEventTimer = null;
+        var previewRenderTimer = null;
+        var previewRendering = false;
+        var previewRenderData = null;
+        var initialized = false;
+
+        window.addEventListener('storage', function (ev) {
+            if (ev.key === 'OrchardCore.visuallayouts:not-connected') {
+                notConnectedWarning.style.display = '';
+            }
+            else if (ev.key === 'OrchardCore.visuallayouts') {
+                if (ev.newValue != null) {
+                    // Smooth event cascading
+                    clearTimeout(previewEventTimer);
+                    previewEventTimer = setTimeout(function () { renderPreview(ev.newValue); }, 150);
+                    notConnectedWarning.style.display = 'none';
+                }
+            }
+        });
+
+        // override default behavior of Bootstrap's. We only hide, not remove the alert.
+        document.getElementById('close-warning').addEventListener('click', function () {
+            notConnectedWarning.style.display = 'none';
+        });
+
+        document.getElementById('close-server-warning').addEventListener('click', function () {
+            serverErrorWarning.style.display = 'none';
+        });
+
+        var preview = localStorage.getItem('OrchardCore.visuallayouts');
+
+        if (preview == null) {
+            // notify the editor to render the preview
+            localStorage.setItem('OrchardCore.visuallayouts:ready', '');
+            localStorage.removeItem('OrchardCore.visuallayouts:ready');
+        }
+        else {
+            renderPreview(preview);
+        }
+
+        iframe.onload = function () {
+            // The iframe may not be well setup after the first loading and then on the first editor update
+            // we may lose the scrolling position. A workaround is to refresh the page once after or to add
+            // here a delay that really block the thread before exiting. Here, we just rewrite the document.
+            if (!initialized && previewRenderData != null) {
+                if (this.contentWindow) {
+                    iframe.contentWindow.document.open();
+                    iframe.contentWindow.document.write(previewRenderData);
+                    iframe.contentWindow.document.close();
+                }
+
+                initialized = true;
+            }
+
+            previewRendering = false;
+
+            if (this.contentWindow && this.contentWindow.location.pathname != indexPreviewUrl) {
+                contentPreviewUrl = this.contentWindow.location.pathname;
+            }
+        }
+
+        function showServerError(message) {
+            var ul = serverErrorWarning.querySelector('ul');
+            ul.textContent = '';
+
+            var li = document.createElement('li');
+            li.textContent = message;
+            ul.appendChild(li);
+
+            serverErrorWarning.style.display = '';
+        }
+
+        function renderPreview(value) {
+            if (previewRendering) {
+                // Defer the last rendering
+                clearTimeout(previewRenderTimer);
+                previewRenderTimer = setTimeout(function () { renderPreview(value); }, 100);
+                return;
+            }
+
+            previewRendering = true;
+            clearTimeout(previewRenderTimer);
+
+            try {
+                var formData = JSON.parse(value);
+
+                if (!formData) {
+                    previewRendering = false;
+                    return;
+                }
+
+                formData += '&' + new URLSearchParams({ Handle: contentPreviewUrl || '' }).toString();
+
+                fetch(renderPreviewUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body: formData
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Status code ' + response.status);
+                        }
+
+                        return response.text();
+                    })
+                    .then(function (data) {
+                        previewRenderData = data;
+
+                        if (iframe && iframe.contentWindow) {
+                            iframe.contentWindow.document.open();
+                            iframe.contentWindow.document.write(data);
+                            iframe.contentWindow.document.close();
+                        }
+
+                        serverErrorWarning.style.display = 'none';
+                        previewRendering = false;
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        showServerError(error.message || String(error));
+                        previewRendering = false;
+                    });
+            }
+            catch (e) {
+                previewRendering = false;
+                console.log('Error while previewing: ' + e);
+            }
+        }
+    })();
+</script>

@@ -1,0 +1,14 @@
+[
+    {
+      "action": "min",
+      "name": "visuallayouts-editor",
+      "source": "Assets/js/visuallayout.editor.js",
+      "tags": ["admin", "js"]
+    },
+    {
+      "action": "min",
+      "name": "visuallayouts-preview-edit",
+      "source": "Assets/js/visuallayoutpreview.edit.js",
+      "tags": ["admin", "js"]
+    }
+]

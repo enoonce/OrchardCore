@@ -89,61 +89,65 @@
 
 @await DisplayAsync(Model.Pager)
 
-<script at="Foot" depends-on="jQuery">
-    $(function () {
-        var actions = $("#actions");
-        var items = $("#items");
-        var filters = $(".filter");
-        var selectAllCtrl = $("#select-all");
-        var selectedItems = $("#selected-items");
-        var itemsCheckboxes = $(":checkbox[name='itemIds']");
+<script at="Foot">
+    (function () {
+        var actions = document.getElementById('actions');
+        var items = document.getElementById('items');
+        var filters = document.querySelector('.filter');
+        var selectAllCtrl = document.getElementById('select-all');
+        var selectedItems = document.getElementById('selected-items');
+        var itemsCheckboxes = Array.prototype.slice.call(document.querySelectorAll("input[name='itemIds']"));
+
+        function checkedCount() {
+            return document.querySelectorAll("input[name='itemIds']:checked").length;
+        }
 
         function displayActionsOrFilters() {
-            if ($(":checkbox[name='itemIds']:checked").length > 1) {
-                actions.show();
-                filters.hide();
-                selectedItems.show();
-                items.hide();
+            if (checkedCount() > 1) {
+                actions.style.display = '';
+                if (filters) filters.style.display = 'none';
+                selectedItems.style.display = '';
+                items.style.display = 'none';
             }
             else {
-                actions.hide();
-                filters.show();
-                selectedItems.hide();
-                items.show();
+                actions.style.display = 'none';
+                if (filters) filters.style.display = '';
+                selectedItems.style.display = 'none';
+                items.style.display = '';
             }
         }
 
-        $(".dropdown-menu .dropdown-item").filter(function () {
-            return $(this).data("action");
-        }).on("click", function () {
-            if ($(":checkbox[name='itemIds']:checked").length > 1) {
-                var $this = $(this);
-                confirmDialog({
-                    ...$this.data(), callback: function (r) {
-                        if (r) {
-                            $("[name='Options.BulkAction']").val($this.data("action"));
-                            $("[name='submit.BulkAction']").click();
-                        }
-                    }
-                });
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(function (element) {
+            if (!element.hasAttribute('data-action')) {
+                return;
             }
+
+            element.addEventListener('click', function () {
+                if (checkedCount() > 1 && window.confirm(element.getAttribute('data-message'))) {
+                    document.querySelector("[name='Options.BulkAction']").value = element.getAttribute('data-action');
+                    document.querySelector("[name='submit.BulkAction']").click();
+                }
+            });
         });
 
-        selectAllCtrl.click(function () {
-            itemsCheckboxes.not(this).prop("checked", this.checked);
-            selectedItems.text($(":checkbox[name='itemIds']:checked").length + ' @T["selected"]');
+        selectAllCtrl.addEventListener('click', function () {
+            itemsCheckboxes.forEach(function (checkbox) { checkbox.checked = selectAllCtrl.checked; });
+            selectedItems.textContent = checkedCount() + ' @T["selected"]';
             displayActionsOrFilters();
         });
 
-        itemsCheckboxes.on("click", function () {
-            var itemsCount = $(":checkbox[name='itemIds']").length;
-            var selectedItemsCount = $(":checkbox[name='itemIds']:checked").length;
+        itemsCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('click', function () {
+                var count = checkedCount();
 
-            selectAllCtrl.prop("checked", selectedItemsCount == itemsCount);
-            selectAllCtrl.prop("indeterminate", selectedItemsCount > 0 && selectedItemsCount < itemsCount);
+                selectAllCtrl.checked = count === itemsCheckboxes.length;
+                selectAllCtrl.indeterminate = count > 0 && count < itemsCheckboxes.length;
 
-            selectedItems.text(selectedItemsCount + ' @T["selected"]');
-            displayActionsOrFilters();
+                selectedItems.textContent = count + ' @T["selected"]';
+                displayActionsOrFilters();
+            });
         });
-    })
+
+        displayActionsOrFilters();
+    })();
 </script>

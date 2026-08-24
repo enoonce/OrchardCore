@@ -16,16 +16,19 @@ public class VisualLayoutShapeBindingResolver : IShapeBindingResolver
 {
     private VisualLayoutsDocument _visualLayoutsDocument;
     private readonly VisualLayoutsManager _visualLayoutsManager;
+    private readonly PreviewVisualLayoutsProvider _previewVisualLayoutsProvider;
     private readonly IShapeFactory _shapeFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private bool? _isAdmin;
 
     public VisualLayoutShapeBindingResolver(
         VisualLayoutsManager visualLayoutsManager,
+        PreviewVisualLayoutsProvider previewVisualLayoutsProvider,
         IShapeFactory shapeFactory,
         IHttpContextAccessor httpContextAccessor)
     {
         _visualLayoutsManager = visualLayoutsManager;
+        _previewVisualLayoutsProvider = previewVisualLayoutsProvider;
         _shapeFactory = shapeFactory;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -39,6 +42,13 @@ public class VisualLayoutShapeBindingResolver : IShapeBindingResolver
         if (_isAdmin.Value)
         {
             return null;
+        }
+
+        var localVisualLayouts = _previewVisualLayoutsProvider.GetVisualLayouts();
+
+        if (localVisualLayouts?.VisualLayouts?.TryGetValue(shapeType, out var localVisualLayout) == true)
+        {
+            return BuildShapeBinding(shapeType, localVisualLayout);
         }
 
         _visualLayoutsDocument ??= await _visualLayoutsManager.GetVisualLayoutsDocumentAsync();

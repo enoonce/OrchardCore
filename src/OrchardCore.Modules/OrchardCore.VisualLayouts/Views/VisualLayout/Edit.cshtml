@@ -23,6 +23,8 @@
             {
                 <a class="btn btn-secondary cancel" role="button" href="@returnUrl">@T["Cancel"]</a>
             }
+
+            <a class="btn btn-info" role="button" href="@Url.Action("Index", "Preview", new { area = "OrchardCore.VisualLayouts" })" target="_blank">@T["Preview"]</a>
         </div>
     </div>
 
@@ -39,9 +41,41 @@
     <div class="ocat-wrapper" asp-validation-class-for="State">
         <label asp-for="State" class="ocat-label">@T["Layout"]</label>
         <div class="ocat-end">
-            <textarea asp-for="State" rows="16" class="form-control"></textarea>
+            <div id="VisualLayoutEditor"
+                 data-empty-text="@T["No rows yet. Click \"Add Row\" to start building the layout."]"
+                 data-row-text="@T["Row"]"
+                 data-add-column-text="@T["Add Column"]"
+                 data-empty-columns-text="@T["No columns yet."]"
+                 data-add-block-text="@T["Add Block"]"
+                 data-empty-blocks-text="@T["Drag blocks here or use \"Add Block\"."]"
+                 data-drag-text="@T["Drag to reorder"]"
+                 class="border rounded p-3 mb-3">
+                <div class="d-flex justify-content-end mb-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-vl-action="add-row">@T["Add Row"]</button>
+                </div>
+                <div data-vl-canvas></div>
+            </div>
+            <textarea asp-for="State" class="form-control d-none" rows="6"></textarea>
             <span asp-validation-for="State"></span>
-            <span class="hint">@T["The JSON representation of the layout. A visual canvas editor will replace this field."]</span>
+            <span class="hint">@T["Design the layout visually above. The JSON representation is kept in sync automatically."]</span>
         </div>
     </div>
 </form>
+
+<script asp-name="visuallayout-editor" at="Foot"></script>
+<script asp-name="visuallayout-preview-edit" at="Foot"></script>
+<script at="Foot">
+    (function () {
+        var bootPreview = function () {
+            if (typeof initializeVisualLayoutPreview === 'function') {
+                initializeVisualLayoutPreview(document.getElementById('Name'), document.getElementById('State'));
+            }
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootPreview);
+        } else {
+            bootPreview();
+        }
+    })();
+</script>
